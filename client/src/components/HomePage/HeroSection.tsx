@@ -27,17 +27,17 @@ function HeroSection() {
         }}
         className="z-50 flex flex-col justify-center items-center"
       >
-    <section className="pt-32 pb-20 px-4 relative z-20">
+    <section className="pt-32 pb-20 px-4 relative z-20 ">
     <div className="container mx-auto text-center max-w-3xl">
-      <h1 className="text-4xl md:text-6xl font-bold mb-6 text-gradient">
+      <h1 className="text-white text-4xl md:text-6xl font-bold mb-6">
         Books that Speak to You
       </h1>
-      <p className="text-xl md:text-2xl mb-10 text-white/80">
+      <p className="text-white text-xl md:text-2xl mb-10">
         Discover insightful summaries of today's most impactful books with synchronized audio narration.
       </p>
       <div className="flex justify-center gap-4 flex-wrap">
         <Link to="/books">
-          <Button size="lg" className="gap-2 bg-purple-400 hover:bg-purple-500 text-white hover:text-white shadow-lg hover:shadow-xl">
+          <Button size="lg" className="gap-2 text-white hover:text-white shadow-lg hover:shadow-xl">
             <BookOpen size={18} /> Browse Library
           </Button>
         </Link>
