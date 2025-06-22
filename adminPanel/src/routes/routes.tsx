@@ -3,7 +3,7 @@ import type { RouteObject } from 'react-router-dom';
 import App from '../App';
 import Dashboard from '../pages/Dashboard';
 import Users from '../pages/Users';
-import Bookings from '../pages/Bookings';
+import Books from '../pages/Books';
 import Settings from '../pages/Settings';
 import Login from '../pages/Login';
 
@@ -21,8 +21,8 @@ const routes: RouteObject[] = [
         element: <Users />,
       },
       {
-        path: '/bookings',
-        element: <Bookings />,
+        path: '/books',
+        element: <Books />,
       },
       {
         path: '/settings',

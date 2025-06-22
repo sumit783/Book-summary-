@@ -83,7 +83,7 @@ export const DesktopSidebar = ({
     <>
       <motion.div
         className={cn(
-          "h-full px-4 py-4 hidden  md:flex md:flex-col bg-neutral-100 dark:bg-neutral-800 w-[300px] shrink-0",
+          "h-full px-4 py-4 hidden md:flex md:flex-col bg-sidebar border-r border-sidebar-border w-[300px] shrink-0",
           className
         )}
         animate={{
@@ -109,13 +109,13 @@ export const MobileSidebar = ({
     <>
       <div
         className={cn(
-          "h-10 px-4 py-4 flex flex-row md:hidden  items-center justify-between bg-neutral-100 dark:bg-neutral-800 w-full"
+          "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-sidebar border-b border-sidebar-border w-full"
         )}
         {...props}
       >
         <div className="flex justify-end z-20 w-full">
           <IconMenu2
-            className="text-neutral-800 dark:text-neutral-200"
+            className="text-sidebar-foreground"
             onClick={() => setOpen(!open)}
           />
         </div>
@@ -130,13 +130,13 @@ export const MobileSidebar = ({
                 ease: "easeInOut",
               }}
               className={cn(
-                "fixed h-full w-full inset-0 bg-white dark:bg-neutral-900 p-10 z-[100] flex flex-col justify-between",
+                "fixed h-full w-full inset-0 bg-background p-10 z-[100] flex flex-col justify-between",
                 className
               )}
             >
               <div
-                className="absolute right-10 top-10 z-50 text-neutral-800 dark:text-neutral-200"
-                onClick={() => setOpen(!open)}
+                className="absolute right-10 top-10 z-50 text-foreground cursor-pointer"
+                onClick={() => setOpen(false)}
               >
                 <IconX />
               </div>
@@ -167,15 +167,23 @@ export const SidebarLink = ({
   open = true,
   ...props
 }: SidebarLinkProps) => {
+  const { setOpen } = useSidebar();
+
+  const handleClick = () => {
+    // Close mobile sidebar when link is clicked
+    setOpen(false);
+  };
+
   return (
     <NavLink
       to={link.href}
+      onClick={handleClick}
       className={({ isActive }) =>
         cn(
           "flex items-center justify-start gap-2 group/sidebar py-2 px-2 rounded-md transition-colors",
           isActive
-            ? "bg-neutral-100 dark:bg-neutral-700 text-neutral-900 dark:text-white"
-            : "text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800",
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
           className
         )
       }

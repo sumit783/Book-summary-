@@ -9,13 +9,26 @@
         "ignore": [
           "scrollbar-width",
           "scrollbar-width: thin",
-          "scrollbar-color"
+          "scrollbar-color",
+          "backdrop-filter"
         ]
       }
     ],
     "typescript-config/consistent-casing": "off",
     "typescript-config/strict": "off",
     "no-inline-styles": "off",
-    "typescript-config/is-valid": "off"
+    "typescript-config/is-valid": "off",
+    "axe/name-role-value": [
+      "default",
+      {
+        "link-name": "off"
+      }
+    ],
+    "axe/forms": [
+      "default",
+      {
+        "label": "off"
+      }
+    ]
   }
 }

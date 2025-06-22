@@ -7,9 +7,10 @@ import type { Book } from "@/type/bookType";
 
 interface AudioPlayerProps {
   book: Book | undefined;
+  onTimeUpdate?: (time: number) => void;
 }
 
-export default function AudioPlayer({ book }: AudioPlayerProps) {
+export default function AudioPlayer({ book, onTimeUpdate }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -35,7 +36,9 @@ export default function AudioPlayer({ book }: AudioPlayerProps) {
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+      const time = audioRef.current.currentTime;
+      setCurrentTime(time);
+      onTimeUpdate?.(time);
     }
   };
 
@@ -64,15 +67,15 @@ export default function AudioPlayer({ book }: AudioPlayerProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 p-4 z-50">
       <div className="container mx-auto max-w-7xl">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full">
           {/* Book Info */}
-          <div className="flex items-center gap-4 min-w-[200px]">
+          <div className="flex flex-col items-center md:flex-row md:items-center gap-4 w-full md:w-auto">
             <img
               src={book.coverImage}
               alt={book.title}
-              className="w-12 h-12 rounded-md object-cover"
+              className="hidden md:block w-20 h-20 md:w-12 md:h-12 rounded-md object-cover mb-2 md:mb-0"
             />
-            <div className="hidden sm:block">
+            <div className="text-center md:text-left">
               <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                 {book.title}
               </h3>
@@ -83,7 +86,7 @@ export default function AudioPlayer({ book }: AudioPlayerProps) {
           </div>
 
           {/* Audio Controls */}
-          <div className="flex-1 flex flex-col items-center gap-2">
+          <div className="w-full md:flex-1 flex flex-col items-center gap-2">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => {
@@ -154,13 +157,14 @@ export default function AudioPlayer({ book }: AudioPlayerProps) {
       </div>
       <audio
         ref={audioRef}
-        src={`${book.audioLink}`}
+        src={book.audioLink}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={() => {
           if (audioRef.current) {
             setDuration(audioRef.current.duration);
           }
         }}
+        onEnded={() => setIsPlaying(false)}
       />
     </div>
   );

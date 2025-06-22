@@ -2,10 +2,17 @@ import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { bookData } from "@/data/bookData";
 import type { Book } from "@/type/bookType";
 import { Badge } from "../ui/badge";
+import { useNavigate } from "react-router-dom";
 
 function NewReleases() {
+  const navigate = useNavigate();
   // Get the latest 5 books from bookData
   const newReleases = bookData.slice(0, 5);
+
+  const handleViewClick = (bookId: number) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate(`/book/${bookId}`);
+  };
 
   return (
     <section className="pt-5 pb-10 px-4">
@@ -50,7 +57,7 @@ function NewReleases() {
                       <span className="text-xs text-gray-500">({book.reviews} reviews)</span>
                     </div>
                     <button
-                      onClick={() => console.log(`Reading ${book.title}`)}
+                      onClick={() => handleViewClick(book.id)}
                       className="px-3 py-1.5 rounded-lg bg-black dark:bg-white dark:text-black text-white text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl dark:hover:shadow-emerald-500/[0.1]"
                     >
                       View

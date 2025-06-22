@@ -36,7 +36,7 @@ function HeroSection() {
         Discover insightful summaries of today's most impactful books with synchronized audio narration.
       </p>
       <div className="flex justify-center gap-4 flex-wrap">
-        <Link to="/books">
+        <Link to="/bookStore">
           <Button size="lg" className="gap-2 text-white hover:text-white shadow-lg hover:shadow-xl">
             <BookOpen size={18} /> Browse Library
           </Button>

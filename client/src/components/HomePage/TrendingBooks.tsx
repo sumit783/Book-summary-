@@ -6,10 +6,8 @@ import { useNavigate } from "react-router-dom";
 function TrendingBooks() {
     const navigate = useNavigate();
     const handleClick = (book: Book) => {
-        console.log(`Reading ${book.title}`);
-        return () => {
-            navigate(`/book/${book.id}`);
-        };
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        navigate(`/book/${book.id}`);
     }
   return (
     <section className="pt-10 pb-10 px-4">
@@ -18,7 +16,7 @@ function TrendingBooks() {
           Trending Books
         </h1>
         <p className="text-lg md:text-xl mb-10">
-          Explore the books that are currently making waves in the literary world.
+            Explore the books that are currently making waves in the literary world.
         </p>
         <div className="relative h-[32rem]">
           <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory h-full custom-scrollbar">
@@ -35,42 +33,41 @@ function TrendingBooks() {
                         />
                       </div>
                     </CardItem>
-                    <CardItem
-                      translateZ="50"
+        <CardItem
+          translateZ="50"
                       className="text-xl font-bold text-neutral-600 dark:text-white mt-4"
-                    >
+        >
                       {book.title}
-                    </CardItem>
-                    <CardItem
-                      as="p"
-                      translateZ="60"
+        </CardItem>
+        <CardItem
+          as="p"
+          translateZ="60"
                       className="text-foreground text-sm max-w-sm mt-2 "
-                    >
+        >
                       {book.description}
-                    </CardItem>
+        </CardItem>
 
                     <div className="flex justify-between items-center mt-4">
                       <div className="flex items-center gap-2">
                         <span className="text-yellow-400">⭐ {book.rating}</span>
                         <span className="text-sm text-gray-500">({book.reviews} reviews)</span>
                       </div>
-                      <CardItem
-                        translateZ={20}
-                        as="button"
-                        onClick={handleClick(book)}
-                        href={`/books/${book.id}`}
+          <CardItem
+            translateZ={20}
+            as="button"
+                        onClick={() => handleClick(book)}
                         className="px-4 py-2 rounded-xl bg-black dark:bg-white dark:text-black text-white text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer hover:scale-110 active:scale-95 shadow-lg hover:shadow-xl dark:hover:shadow-emerald-500/[0.1] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
+          >
                         View Detail
-                      </CardItem>
-                    </div>
-                  </CardBody>
-                </CardContainer>
+          </CardItem>
+        </div>
+      </CardBody>
+    </CardContainer> 
               </div>
             ))}
           </div>
         </div>
-      </div>
+        </div>
     </section>
   );
 }
