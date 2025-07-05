@@ -5,6 +5,7 @@ import Header from "@/components/bookDetail/Header";
 import AudioPlayer from "@/components/bookDetail/AudioPlayer";
 import Summary from "@/components/bookDetail/Summary";
 import RecommendedBooks from "@/components/bookDetail/RecommendedBooks";
+import Comment from "@/components/bookDetail/Comment";
 import { useState, useEffect } from "react";
 
 function BookDetails() {
@@ -80,6 +81,7 @@ function BookDetails() {
         />
         <Summary book={book} currentTime={currentTime} />
         <RecommendedBooks currentBook={book} allBooks={bookData} />
+        <Comment />
       </div>
     </div>
   )

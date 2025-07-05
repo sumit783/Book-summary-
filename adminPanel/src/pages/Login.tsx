@@ -274,9 +274,9 @@ const Login: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="text-center mt-8"
+          className="text-center my-8"
         >
-          <p className="text-sm text-gray-300">
+          <p className="text-sm text-gray-300 ">
             Don't have an account?{' '}
             <button className="text-blue-400 hover:text-blue-300 transition-colors font-medium">
               Sign up
