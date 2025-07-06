@@ -1,4 +1,6 @@
 const Book = require('../models/Book');
+const Comment = require('../models/Comment');
+const FavBooks = require('../models/FavBooks');
 const slugify = require('slugify');
 const generateAudio = require('../services/ttsService');
 
@@ -7,10 +9,17 @@ exports.createBook = async (req, res) => {
       const {
         title,
         author,
+        description,
         summary,
         metaTitle,
         metaDescription,
-        affiliateLink
+        metaKeywords,
+        genre,
+        categories,
+        affiliateLink,
+        publicationDate,
+        rating,
+        reviews,
       } = req.body;
   
       // Generate base slug
@@ -40,13 +49,22 @@ exports.createBook = async (req, res) => {
       const book = new Book({
         title,
         author,
+        description,
         summary,
         metaTitle,
         metaDescription,
+        metaKeywords,
+        genre,
+        categories,
         affiliateLink,
+        publicationDate,
+        rating,
+        reviews,
         coverImage: coverImagePath,
         audioUri: audioPath,
-        slug
+        slug,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
   
       await book.save();
@@ -64,5 +82,113 @@ exports.createBook = async (req, res) => {
 
 exports.getBooks = async (req, res) => {
   const books = await Book.find();
-  res.json(books);
+  res.status(200).json({ books, success: true,
+    message: 'Books fetched successfully',
+  });
 };
+
+exports.updateBook = async (req, res) => {
+  try {
+    const {
+      title,
+      author,
+      description,
+      summary,
+      metaTitle,
+      metaDescription,
+      metaKeywords,
+      genre,
+      categories,
+      affiliateLink,
+      publicationDate,
+      rating,
+      reviews,
+    } = req.body;
+
+    // Find the existing book to check if summary has changed
+    const existingBook = await Book.findById(req.params.id);
+    if (!existingBook) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    // Check if summary has changed and regenerate audio if needed
+    let audioUri = existingBook.audioUri;
+    if (summary && summary !== existingBook.summary) {
+      console.log('Summary changed, regenerating audio...');
+      const newAudioPath = await generateAudio(summary, title || existingBook.title);
+      if (newAudioPath) {
+        audioUri = newAudioPath;
+        console.log(`New audio generated: ${newAudioPath}`);
+      } else {
+        console.error('Audio generation failed');
+      }
+    }
+
+    const book = await Book.findByIdAndUpdate(req.params.id, {
+      title,
+      author,
+      description,
+      summary,
+      metaTitle,
+      metaDescription,
+      metaKeywords,
+      genre,
+      categories,
+      affiliateLink,
+      publicationDate,
+      rating,
+      reviews,
+      audioUri,
+      updatedAt: Date.now(),
+    }, { new: true });
+
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    res.json({
+      message: summary !== existingBook.summary ? 'Book updated with new audio generated' : 'Book updated successfully',
+      book,
+      success: true
+    });
+
+  } catch (err) {
+    console.error('Error updating book:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.deleteBook = async (req, res) => {
+  try {
+    const bookId = req.params.id;
+    
+    // Check if book exists
+    const book = await Book.findById(bookId);
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    // Delete all book-related data
+    await Promise.all([
+      // Delete all comments for this book
+      Comment.deleteMany({ bookId: bookId }),
+      
+      // Delete all favorite entries for this book
+      FavBooks.deleteMany({ bookId: bookId }),
+      
+      // Delete the book
+      Book.findByIdAndDelete(bookId)
+    ]);
+
+    res.json({ 
+      message: 'Book and all related data deleted successfully', 
+      success: true 
+    });
+
+  } catch (err) {
+    console.error('Delete book error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+
