@@ -58,11 +58,15 @@ exports.createComment = async (req, res) => {
     await updateBookRating(bookId);
 
     // Populate user info for response
-    await newComment.populate('userId', 'email');
+    await newComment.populate('userId', 'username email');
 
     res.status(201).json({
       message: 'Comment created successfully',
       comment: newComment,
+      user: {
+        username: newComment.userId.username,
+        email: newComment.userId.email
+      },
       success: true
     });
 
@@ -95,10 +99,25 @@ exports.getCommentsByBook = async (req, res) => {
 
     // Get comments with pagination and sorting
     const comments = await Comment.find({ bookId })
-      .populate('userId', 'email')
+      .populate('userId', 'username email')
       .sort({ [sort]: sortOrder })
       .skip(skip)
       .limit(parseInt(limit));
+
+    // Map comments to include user details explicitly
+    const commentsWithUser = comments.map(comment => ({
+      _id: comment._id,
+      bookId: comment.bookId,
+      rating: comment.rating,
+      comment: comment.comment,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+      user: comment.userId ? {
+        _id: comment.userId._id,
+        username: comment.userId.username,
+        email: comment.userId.email
+      } : null
+    }));
 
     // Get total count for pagination
     const totalComments = await Comment.countDocuments({ bookId });
@@ -113,7 +132,7 @@ exports.getCommentsByBook = async (req, res) => {
     const averageRating = avgRating.length > 0 ? avgRating[0].avgRating : 0;
 
     res.json({
-      comments,
+      comments: commentsWithUser,
       pagination: {
         currentPage: parseInt(page),
         totalPages,

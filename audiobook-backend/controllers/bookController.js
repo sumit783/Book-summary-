@@ -22,9 +22,14 @@ exports.createBook = async (req, res) => {
         reviews,
       } = req.body;
   
+      // Check for existing book with the same title (case-insensitive)
+      const existingBookByTitle = await Book.findOne({ title: { $regex: `^${title}$`, $options: 'i' } });
+      if (existingBookByTitle) {
+        return res.status(400).json({ error: 'Book with this title already exists.' });
+      }
+
       // Generate base slug
       let slug = slugify(title, { lower: true });
-      
       // Check if slug exists and append timestamp if it does
       const existingBook = await Book.findOne({ slug });
       if (existingBook) {
@@ -84,6 +89,13 @@ exports.getBooks = async (req, res) => {
   const books = await Book.find();
   res.status(200).json({ books, success: true,
     message: 'Books fetched successfully',
+  });
+};
+
+exports.getBookById = async (req, res) => {
+  const book = await Book.findById(req.params.id);
+  res.status(200).json({ book, success: true,
+    message: 'Book fetched successfully',
   });
 };
 

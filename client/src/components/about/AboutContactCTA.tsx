@@ -4,7 +4,7 @@ const AboutContactCTA = () => (
       <h3 className="text-2xl font-bold text-center mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent animate-gradient-x">
         Want to connect or contribute?
       </h3>
-      <p className="text-gray-200 text-center mb-6">
+      <p className="text-gray-800 dark:text-gray-200 text-center mb-6">
         We love hearing from readers and collaborators. Reach out to us or join our community!
       </p>
       <a

@@ -35,7 +35,7 @@ const chartConfig = {
 
 export function LiveChart() {
   const [count, setCount] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const [, setIsHovered] = useState(false);
 
   useEffect(() => {
     const targetCount = chartData[0].visitors;

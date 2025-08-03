@@ -6,6 +6,7 @@ import BookDetails from './pages/BookDetails';
 import PageNotFound from './components/PageNotFound';
 import BookStore from './pages/BookStore';
 import MyLibrary from './pages/MyLibrary';
+import UserProfile from './pages/UserProfile';
 
 const AppRoutes: React.FC = () => (
   <Routes>
@@ -15,6 +16,7 @@ const AppRoutes: React.FC = () => (
       <Route path='bookStore' element={<BookStore />} />
       <Route path="myLibrary" element={<MyLibrary />} />
       <Route path="about" element={<About />} />
+      <Route path="profile" element={<UserProfile />} />
       <Route path="unauthorized" element={<div>Unauthorized Access</div>} />
 
       <Route path="*" element={<PageNotFound />} />

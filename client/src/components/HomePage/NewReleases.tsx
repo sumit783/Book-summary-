@@ -1,16 +1,45 @@
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import { bookData } from "@/data/bookData";
 import type { Book } from "@/type/bookType";
 import { Badge } from "../ui/badge";
 import { useNavigate } from "react-router-dom";
+import { getBooks } from "@/services/api";
+import { useEffect, useState } from "react";
 
 function NewReleases() {
   const navigate = useNavigate();
+  const [bookData, setBookData] = useState<Book[]>([]);
+  useEffect(() => {
+    const fetchBooks = async () => {
+      const response = await getBooks();
+      if (response.data && response.data.books) {
+        const mappedBooks: Book[] = response.data.books.map((b: any) => ({
+          id: b._id,
+          title: b.title,
+          author: b.author,
+          coverImage: import.meta.env.VITE_BACKEND_URL + b.coverImage,
+          description: b.description,
+          summary: b.summary,
+          categories: b.categories,
+          metaTitle: b.metaTitle,
+          metaDescription: b.metaDescription,
+          metaKeywords: b.metaKeywords,
+          genre: b.genre,
+          affiliateLink: b.affiliateLink,
+          publicationDate: b.publicationDate,
+          rating: b.rating,
+          reviews: b.reviews,
+          audioLink: import.meta.env.VITE_BACKEND_URL + b.audioUri,
+        }));
+        setBookData(mappedBooks);
+      }
+    };
+    fetchBooks();
+  }, []);
   // Get the latest 5 books from bookData
   const newReleases = bookData.slice(0, 5);
 
   const handleViewClick = (bookId: number) => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     navigate(`/book/${bookId}`);
   };
 
@@ -24,17 +53,16 @@ function NewReleases() {
           Discover our latest additions to the library.
         </p>
         <div className="relative">
-            
           <div className="flex gap-8 overflow-x-auto snap-x snap-mandatory custom-scrollbar py-4 px-2">
             {newReleases.map((book: Book, index) => (
               <div key={index} className="flex-none w-[275px] snap-center">
                 <Card className="w-full h-full bg-gray-50 dark:bg-black dark:border-white/[0.2] border-black/[0.1] hover:scale-105 transition-transform duration-300 shadow-lg dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] rounded-xl">
                   <CardHeader className="px-4 relative group/card">
-                  <div className="absolute inset-0">
-                <Badge className="absolute top-2 right-6 bg-purple-500 text-white px-3 py-1 rounded-bl-lg">
-                    New
-                </Badge>
-            </div>
+                    <div className="absolute inset-0">
+                      <Badge className="absolute top-2 right-6 bg-purple-500 text-white px-3 py-1 rounded-bl-lg">
+                        New
+                      </Badge>
+                    </div>
                     <div className="aspect-square w-full overflow-hidden rounded-xl">
                       <img
                         src={book.coverImage}
@@ -53,8 +81,12 @@ function NewReleases() {
                   </CardContent>
                   <CardFooter className="p-4 pt-0 flex justify-between items-center">
                     <div className="flex items-center gap-1">
-                      <span className="text-yellow-400 text-sm">⭐ {book.rating}</span>
-                      <span className="text-xs text-gray-500">({book.reviews} reviews)</span>
+                      <span className="text-yellow-400 text-sm">
+                        ⭐ {book.rating}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        ({book.reviews} reviews)
+                      </span>
                     </div>
                     <button
                       onClick={() => handleViewClick(book.id)}

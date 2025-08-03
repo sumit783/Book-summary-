@@ -8,7 +8,7 @@ const AboutHeader = () => (
     <h1 className="text-5xl md:text-6xl font-extrabold text-center bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent animate-gradient-x drop-shadow-lg">
       About EchoBooks
     </h1>
-    <p className="text-xl md:text-2xl text-center text-gray-200 max-w-2xl font-medium">
+    <p className="text-xl md:text-2xl text-center text-gray-800 dark:text-gray-200 max-w-2xl font-medium">
       Your gateway to the world's most influential books, summarized for you.
     </p>
   </div>

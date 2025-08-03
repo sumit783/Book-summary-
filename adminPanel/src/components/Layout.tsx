@@ -68,12 +68,9 @@ export function Layout() {
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            {/* Theme Toggler */}
             <div className="flex justify-start">
               <ThemeToggler />
             </div>
-            
-            {/* Logout */}
             <SidebarLink
               link={{
                 label: "Logout",

@@ -10,14 +10,53 @@ import {
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { X } from "lucide-react";
+import { loginUser } from "@/services/api";
 
 interface LoginDialogProps {
   open: boolean;
   onClose: () => void;
+  onLoginSuccess?: () => void;
 }
 
-export const LoginDialog = ({ open, onClose }: LoginDialogProps) => {
+export const LoginDialog = ({ open, onClose, onLoginSuccess }: LoginDialogProps) => {
   const [tab, setTab] = useState<'login' | 'signup'>('login');
+  const [signupUsername, setSignupUsername] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupError, setSignupError] = useState<string | null>(null);
+  const [signupSuccess, setSignupSuccess] = useState<string | null>(null);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginSuccess, setLoginSuccess] = useState<string | null>(null);
+  
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSignupError(null);
+    setSignupSuccess(null);
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    setLoginSuccess(null);
+    try {
+      const response = await loginUser({ email: loginEmail, password: loginPassword });
+      const data = response.data;
+      if (data.success && data.token && data.user) {
+        setLoginSuccess("Login successful!");
+        // Save user and token to localStorage
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        onClose();
+        if (onLoginSuccess) onLoginSuccess();
+      } else {
+        setLoginError(data.message || "Login failed.");
+      }
+    } catch (error: any) {
+      setLoginError(error.response?.data?.message || error.message || "Login failed.");
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -74,31 +113,70 @@ export const LoginDialog = ({ open, onClose }: LoginDialogProps) => {
         {/* Animated Tab Content */}
         <div className="relative px-8 pt-4 pb-8 animate-fade-in z-10">
           {tab === 'login' ? (
-            <form className="space-y-5">
+            <form className="space-y-5" onSubmit={handleLogin}>
               <div>
                 <label className="block text-sm font-medium mb-1 text-neutral-700 dark:text-neutral-200">Email</label>
-                <input type="email" className="w-full px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/60 transition text-base shadow-sm" placeholder="you@email.com" />
+                <input
+                  type="email"
+                  className="w-full px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/60 transition text-base shadow-sm"
+                  placeholder="you@email.com"
+                  value={loginEmail}
+                  onChange={e => setLoginEmail(e.target.value)}
+                  required
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1 text-neutral-700 dark:text-neutral-200">Password</label>
-                <input type="password" className="w-full px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/60 transition text-base shadow-sm" placeholder="••••••••" />
+                <input
+                  type="password"
+                  className="w-full px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/60 transition text-base shadow-sm"
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={e => setLoginPassword(e.target.value)}
+                  required
+                />
               </div>
+              {loginError && <div className="text-red-500 text-sm">{loginError}</div>}
+              {loginSuccess && <div className="text-green-600 text-sm">{loginSuccess}</div>}
               <button type="submit" className="w-full py-2 rounded-xl bg-gradient-to-tr from-primary to-secondary text-white font-semibold shadow-md hover:scale-105 transition-transform text-base">Login</button>
             </form>
           ) : (
-            <form className="space-y-5">
+            <form className="space-y-5" onSubmit={handleSignup}>
               <div>
-                <label className="block text-sm font-medium mb-1 text-neutral-700 dark:text-neutral-200">Name</label>
-                <input type="text" className="w-full px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/60 transition text-base shadow-sm" placeholder="Your Name" />
+                <label className="block text-sm font-medium mb-1 text-neutral-700 dark:text-neutral-200">Username</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/60 transition text-base shadow-sm"
+                  placeholder="Your Username"
+                  value={signupUsername}
+                  onChange={e => setSignupUsername(e.target.value)}
+                  required
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1 text-neutral-700 dark:text-neutral-200">Email</label>
-                <input type="email" className="w-full px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/60 transition text-base shadow-sm" placeholder="you@email.com" />
+                <input
+                  type="email"
+                  className="w-full px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/60 transition text-base shadow-sm"
+                  placeholder="you@email.com"
+                  value={signupEmail}
+                  onChange={e => setSignupEmail(e.target.value)}
+                  required
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1 text-neutral-700 dark:text-neutral-200">Password</label>
-                <input type="password" className="w-full px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/60 transition text-base shadow-sm" placeholder="Create a password" />
+                <input
+                  type="password"
+                  className="w-full px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/60 transition text-base shadow-sm"
+                  placeholder="Create a password"
+                  value={signupPassword}
+                  onChange={e => setSignupPassword(e.target.value)}
+                  required
+                />
               </div>
+              {signupError && <div className="text-red-500 text-sm">{signupError}</div>}
+              {signupSuccess && <div className="text-green-600 text-sm">{signupSuccess}</div>}
               <button type="submit" className="w-full py-2 rounded-xl bg-gradient-to-tr from-primary to-secondary text-white font-semibold shadow-md hover:scale-105 transition-transform text-base">Sign Up</button>
             </form>
           )}

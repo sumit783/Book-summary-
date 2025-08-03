@@ -43,7 +43,7 @@ const BookStoreGrid = ({ books }: BookStoreGridProps) => {
                 translateZ="60"
                 className="text-foreground text-sm max-w-sm mt-2 "
               >
-                {book.description}
+                {book.description.split(" ").slice(0, 10).join(" ")}...
               </CardItem>
 
               <div className="flex justify-between items-center mt-4">

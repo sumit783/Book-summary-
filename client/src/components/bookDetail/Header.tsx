@@ -4,6 +4,9 @@ function Header({ book }: { book: Book | undefined }) {
   if (!book) {
     return <div className="text-center text-red-500">Book not found</div>;
   }
+  const handleBuyNow = () => {
+    window.open(book.affiliateLink, "_blank");
+  };
   return (
     <div className="w-full flex flex-col items-center md:flex-row gap-6">
         <div className="w-full md:w-1/3 overflow-hidden rounded-lg shadow-lg">
@@ -23,7 +26,7 @@ function Header({ book }: { book: Book | undefined }) {
           </div>
           <p className="text-foreground mb-4">{book?.description}</p>
           <div className="flex gap-4">
-            <button className="bg-blue-500 font-semibold text-white px-4 py-2 rounded-lg hover:bg-blue-600 hover:scale-105  transition">
+            <button className="bg-blue-500 font-semibold text-white px-4 py-2 rounded-lg hover:bg-blue-600 hover:scale-105  transition" onClick={handleBuyNow}>
              Buy Now
             </button>
             <button className="border border-gray-300 px-4 py-2 rounded-lg transition hover:scale-105">

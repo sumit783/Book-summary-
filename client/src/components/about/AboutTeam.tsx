@@ -28,8 +28,8 @@ const AboutTeam = () => (
           className="flex flex-col items-center bg-white/10 dark:bg-white/10 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white/20 dark:border-white/20 w-64 transition-transform hover:scale-105 hover:shadow-2xl"
         >
           <img src={member.avatar} alt={member.name} className="w-20 h-20 rounded-full mb-4 shadow-lg border-4 border-white/30 object-cover" />
-          <div className="text-lg font-semibold text-white mb-1 text-center">{member.name}</div>
-          <div className="text-purple-200 text-sm text-center">{member.role}</div>
+          <div className="text-lg font-semibold text-gray-800 dark:text-white mb-1 text-center">{member.name}</div>
+          <div className="text-purple-700 dark:text-purple-200 text-sm text-center">{member.role}</div>
         </div>
       ))}
     </div>

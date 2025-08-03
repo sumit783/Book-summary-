@@ -35,8 +35,8 @@ const AboutFeatures = () => (
           className="flex flex-col items-center bg-white/10 dark:bg-white/10 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white/20 dark:border-white/20 transition-transform hover:scale-105 hover:shadow-2xl"
         >
           <div className="mb-4">{f.icon}</div>
-          <div className="text-lg font-semibold text-white mb-2 text-center">{f.title}</div>
-          <div className="text-gray-300 text-center text-sm">{f.desc}</div>
+          <div className="text-lg font-semibold text-gray-800 dark:text-white mb-2 text-center">{f.title}</div>
+          <div className="text-gray-700 dark:text-gray-300 text-center text-sm">{f.desc}</div>
         </div>
       ))}
     </div>

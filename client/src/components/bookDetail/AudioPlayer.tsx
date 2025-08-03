@@ -8,58 +8,145 @@ import type { Book } from "@/type/bookType";
 interface AudioPlayerProps {
   book: Book | undefined;
   onTimeUpdate?: (time: number) => void;
+  onDurationChange?: (duration: number) => void;
 }
 
-export default function AudioPlayer({ book, onTimeUpdate }: AudioPlayerProps) {
+export default function AudioPlayer({ book, onTimeUpdate, onDurationChange }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSeeking, setIsSeeking] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const timeUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
-  }, []);
+    const audio = audioRef.current;
+    if (!audio) return;
 
-  const togglePlay = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration);
+      setIsLoading(false);
+      onDurationChange?.(audio.duration);
+    };
+
+    const handleTimeUpdate = () => {
+      if (!isSeeking) {
+        const time = audio.currentTime;
+        setCurrentTime(time);
+        onTimeUpdate?.(time);
       }
-      setIsPlaying(!isPlaying);
-    }
-  };
+    };
 
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      const time = audioRef.current.currentTime;
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+      onTimeUpdate?.(0);
+    };
+
+    const handleError = (e: Event) => {
+      console.error('Audio error:', e);
+      setIsLoading(false);
+    };
+
+    const handleSeeking = () => {
+      setIsSeeking(true);
+    };
+
+    const handleSeeked = () => {
+      setIsSeeking(false);
+      const time = audio.currentTime;
       setCurrentTime(time);
       onTimeUpdate?.(time);
+    };
+
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('seeking', handleSeeking);
+    audio.addEventListener('seeked', handleSeeked);
+
+    // Set up frequent time updates for precise word highlighting
+    timeUpdateIntervalRef.current = setInterval(() => {
+      if (isPlaying && !isSeeking) {
+        const time = audio.currentTime;
+        setCurrentTime(time);
+        onTimeUpdate?.(time);
+      }
+    }, 100); // Update every 100ms for smooth word highlighting
+
+    return () => {
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('seeking', handleSeeking);
+      audio.removeEventListener('seeked', handleSeeked);
+      
+      if (timeUpdateIntervalRef.current) {
+        clearInterval(timeUpdateIntervalRef.current);
+      }
+    };
+  }, [onTimeUpdate, onDurationChange, isPlaying, isSeeking]);
+
+  const togglePlay = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+      });
     }
+    setIsPlaying(!isPlaying);
   };
 
   const handleSliderChange = (value: number[]) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = value[0];
-      setCurrentTime(value[0]);
-    }
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    const newTime = value[0];
+    audio.currentTime = newTime;
+    setCurrentTime(newTime);
+    onTimeUpdate?.(newTime);
   };
 
   const handleVolumeChange = (value: number[]) => {
-    if (audioRef.current) {
-      audioRef.current.volume = value[0];
-      setVolume(value[0]);
-    }
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    const newVolume = value[0];
+    audio.volume = newVolume;
+    setVolume(newVolume);
   };
 
   const formatTime = (time: number) => {
+    if (isNaN(time)) return '0:00';
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const skipBackward = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const newTime = Math.max(0, audio.currentTime - 10);
+    audio.currentTime = newTime;
+    setCurrentTime(newTime);
+    onTimeUpdate?.(newTime);
+  };
+
+  const skipForward = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const newTime = Math.min(duration, audio.currentTime + 10);
+    audio.currentTime = newTime;
+    setCurrentTime(newTime);
+    onTimeUpdate?.(newTime);
   };
 
   if (!book) return null;
@@ -89,20 +176,17 @@ export default function AudioPlayer({ book, onTimeUpdate }: AudioPlayerProps) {
           <div className="w-full md:flex-1 flex flex-col items-center gap-2">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => {
-                  if (audioRef.current) {
-                    audioRef.current.currentTime = Math.max(0, currentTime - 10);
-                  }
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+                onClick={skipBackward}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                 aria-label="Rewind 10 seconds"
               >
                 <SkipBack className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
               <button
                 onClick={togglePlay}
-                className="p-3 bg-primary hover:bg-primary/90 rounded-full"
+                className="p-3 bg-primary hover:bg-primary/90 rounded-full transition-colors disabled:opacity-50"
                 aria-label={isPlaying ? "Pause" : "Play"}
+                disabled={isLoading}
               >
                 {isPlaying ? (
                   <Pause className="w-6 h-6 text-white" />
@@ -111,32 +195,26 @@ export default function AudioPlayer({ book, onTimeUpdate }: AudioPlayerProps) {
                 )}
               </button>
               <button
-                onClick={() => {
-                  if (audioRef.current) {
-                    audioRef.current.currentTime = Math.min(
-                      duration,
-                      currentTime + 10
-                    );
-                  }
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+                onClick={skipForward}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                 aria-label="Forward 10 seconds"
               >
                 <SkipForward className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
             </div>
             <div className="w-full flex items-center gap-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[2.5rem]">
                 {formatTime(currentTime)}
               </span>
               <Slider
                 value={[currentTime]}
-                max={duration}
-                step={1}
+                max={duration || 100}
+                step={0.1}
                 onValueChange={handleSliderChange}
                 className="flex-1"
+                disabled={isLoading}
               />
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[2.5rem]">
                 {formatTime(duration)}
               </span>
             </div>
@@ -158,13 +236,8 @@ export default function AudioPlayer({ book, onTimeUpdate }: AudioPlayerProps) {
       <audio
         ref={audioRef}
         src={book.audioLink}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={() => {
-          if (audioRef.current) {
-            setDuration(audioRef.current.duration);
-          }
-        }}
-        onEnded={() => setIsPlaying(false)}
+        preload="metadata"
+        onLoadStart={() => setIsLoading(true)}
       />
     </div>
   );

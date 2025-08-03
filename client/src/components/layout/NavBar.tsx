@@ -17,6 +17,12 @@ export const NavBar = () => {
     return (savedTheme as "light" | "dark") || (prefersDark ? "dark" : "light");
   });
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+  const [hasToken, setHasToken] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setHasToken(!!token);
+  }, []);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -123,13 +129,24 @@ export const NavBar = () => {
                   )}
                 </span>
               </Button>
-              <Button
-                size="sm"
-                className="bg-gradient-to-tr from-primary to-secondary text-white shadow-md hover:scale-105 transition-transform"
-                onClick={() => setLoginDialogOpen(true)}
-              >
-                Get Started
-              </Button>
+              {hasToken ? (
+                <Link to="/profile">
+                  <Button
+                    size="sm"
+                    className="bg-gradient-to-tr from-primary to-secondary text-white shadow-md hover:scale-105 transition-transform"
+                  >
+                    Profile
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-tr from-primary to-secondary text-white shadow-md hover:scale-105 transition-transform"
+                  onClick={() => setLoginDialogOpen(true)}
+                >
+                  Get Started
+                </Button>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -230,13 +247,25 @@ export const NavBar = () => {
                 }`}
                 style={{ animationDelay: "0.6s" }}
               >
-                <Button
-                  size="sm"
-                  className="w-full transition-all duration-200 hover:scale-105 bg-gradient-to-tr from-primary to-secondary text-white shadow-md"
-                  onClick={() => setLoginDialogOpen(true)}
-                >
-                  Get Started
-                </Button>
+                {hasToken ? (
+                  <Link to="/profile">
+                    <Button
+                      size="sm"
+                      className="w-full transition-all duration-200 hover:scale-105 bg-gradient-to-tr from-primary to-secondary text-white shadow-md"
+                      onClick={closeMobileMenu}
+                    >
+                      Profile
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="w-full transition-all duration-200 hover:scale-105 bg-gradient-to-tr from-primary to-secondary text-white shadow-md"
+                    onClick={() => setLoginDialogOpen(true)}
+                  >
+                    Get Started
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -245,6 +274,10 @@ export const NavBar = () => {
       <LoginDialog
         open={loginDialogOpen}
         onClose={() => setLoginDialogOpen(false)}
+        onLoginSuccess={() => {
+          setHasToken(true);
+          setLoginDialogOpen(false);
+        }}
       />
     </>
   );

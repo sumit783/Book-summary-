@@ -1,14 +1,46 @@
 import { CardContainer, CardBody, CardItem } from "../ui/3d-card";
-import { bookData } from "@/data/bookData";
 import type { Book } from "@/type/bookType";
 import { useNavigate } from "react-router-dom";
+import { getBooks } from "@/services/api";
+import { useEffect, useState } from "react";
 
 function TrendingBooks() {
     const navigate = useNavigate();
+  const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
+
     const handleClick = (book: Book) => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         navigate(`/book/${book.id}`);
-    }
+  };
+
+    useEffect(() => {
+        const fetchBooks = async () => {
+            const response = await getBooks();
+      if (response.data && response.data.books) {
+        const mappedBooks: Book[] = response.data.books.map((b: any) => ({
+          id: b._id,
+          title: b.title,
+          author: b.author,
+          coverImage: import.meta.env.VITE_BACKEND_URL + b.coverImage,
+          description: b.description,
+          summary: b.summary,
+          categories: b.categories,
+          metaTitle: b.metaTitle,
+          metaDescription: b.metaDescription,
+          metaKeywords: b.metaKeywords,
+          genre: b.genre,
+          affiliateLink: b.affiliateLink,
+          publicationDate: b.publicationDate,
+          rating: b.rating,
+          reviews: b.reviews,
+          audioLink: import.meta.env.VITE_BACKEND_URL + b.audioUri,
+        }));
+        setTrendingBooks(mappedBooks);
+        }
+    };
+        fetchBooks();
+    }, []);
+
   return (
     <section className="pt-10 pb-10 px-4">
       <div className="container mx-auto text-center">
@@ -20,8 +52,8 @@ function TrendingBooks() {
         </p>
         <div className="relative h-[32rem]">
           <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory h-full custom-scrollbar">
-            {bookData.map((book: Book,index) => (
-              <div key={index} className="flex-none w-[300px] h-full my-auto snap-center">
+            {trendingBooks.map((book) => (
+              <div key={book.id} className="flex-none w-[300px] h-full my-auto snap-center">
                 <CardContainer className="w-full h-full">
                   <CardBody className="bg-gray-50 relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/[0.1] dark:bg-black dark:border-white/[0.2] border-black/[0.1] w-full h-full rounded-xl p-6">
                     <CardItem translateZ="100" className="w-full mt-4">
@@ -44,9 +76,8 @@ function TrendingBooks() {
           translateZ="60"
                       className="text-foreground text-sm max-w-sm mt-2 "
         >
-                      {book.description}
+                      {book.description.split(" ").slice(0, 10).join(" ")}...
         </CardItem>
-
                     <div className="flex justify-between items-center mt-4">
                       <div className="flex items-center gap-2">
                         <span className="text-yellow-400">⭐ {book.rating}</span>

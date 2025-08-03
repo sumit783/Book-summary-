@@ -21,7 +21,7 @@ export const ImagesSlider = ({
   direction?: "up" | "down";
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [loadedImages, setLoadedImages] = useState<string[]>([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -127,12 +127,22 @@ export const ImagesSlider = ({
   // Clone children and inject currentIndex
   const childrenWithProps = React.Children.map(children, (child) => {
     if (React.isValidElement(child)) {
-      return React.cloneElement(child, { 
+      // Only pass custom props to React components, not DOM elements
+      const customProps = {
         currentIndex,
         onNext: handleNext,
         onPrevious: handlePrevious,
         isTransitioning
-      } as any);
+      };
+      
+      // Check if the child is a DOM element (has a string type)
+      if (typeof child.type === 'string') {
+        // For DOM elements, don't pass custom props
+        return child;
+      } else {
+        // For React components, pass the custom props
+        return React.cloneElement(child, customProps as any);
+      }
     }
     return child;
   });

@@ -18,7 +18,7 @@ const RecommendedBooks = ({ currentBook, allBooks }: RecommendedBooksProps) => {
     .filter(book => 
       book.id !== currentBook.id && // Exclude current book
       book.categories.some(category => 
-        currentBook.categories.includes(category)
+        currentBook.categories?.includes(category)
       )
     )
     .slice(0, 3); // Show only 3 recommendations

@@ -1,5 +1,4 @@
 import { useParams } from "react-router-dom";
-import { bookData } from "@/data/bookData";
 import type { Book } from "@/type/bookType";
 import Header from "@/components/bookDetail/Header";
 import AudioPlayer from "@/components/bookDetail/AudioPlayer";
@@ -7,15 +6,81 @@ import Summary from "@/components/bookDetail/Summary";
 import RecommendedBooks from "@/components/bookDetail/RecommendedBooks";
 import Comment from "@/components/bookDetail/Comment";
 import { useState, useEffect } from "react";
+import { getBookById, getBooks } from "@/services/api";
 
 function BookDetails() {
-  const bookId = useParams().id;
-  const book: Book | undefined = bookData.find((b) => b.id.toString() === bookId);
+  const { id: bookId } = useParams();
   const [currentTime, setCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [book, setBook] = useState<Book | undefined>(undefined);
+  const [allBooks, setAllBooks] = useState<Book[]>([]);
+
+  useEffect(() => {
+    const fetchBook = async () => {
+      if (!bookId) return;
+      try {
+        const response = await getBookById(bookId);
+        const b = response.data.book;
+        const mappedBook: Book = {
+          id: b._id,
+          title: b.title,
+          author: b.author,
+          coverImage: import.meta.env.VITE_BACKEND_URL + b.coverImage,
+          description: b.description,
+          summary: b.summary,
+          categories: b.categories,
+          metaTitle: b.metaTitle,
+          metaDescription: b.metaDescription,
+          metaKeywords: b.metaKeywords,
+          genre: b.genre,
+          affiliateLink: b.affiliateLink,
+          publicationDate: b.publicationDate,
+          rating: b.rating,
+          reviews: b.reviews,
+          audioLink: import.meta.env.VITE_BACKEND_URL + b.audioUri,
+        };
+        setBook(mappedBook);
+      } catch (error) {
+        console.error("Error fetching book:", error);
+      }
+    };
+    fetchBook();
+  }, [bookId]);
+
+  useEffect(() => {
+    const fetchAllBooks = async () => {
+      try {
+        const response = await getBooks();
+        if (response.data && response.data.books) {
+          const mappedBooks: Book[] = response.data.books.map((b: any) => ({
+            id: b._id,
+            title: b.title,
+            author: b.author,
+            coverImage: import.meta.env.VITE_BACKEND_URL + b.coverImage,
+            description: b.description,
+            summary: b.summary,
+            categories: b.categories,
+            metaTitle: b.metaTitle,
+            metaDescription: b.metaDescription,
+            metaKeywords: b.metaKeywords,
+            genre: b.genre,
+            affiliateLink: b.affiliateLink,
+            publicationDate: b.publicationDate,
+            rating: b.rating,
+            reviews: b.reviews,
+            audioLink: import.meta.env.VITE_BACKEND_URL + b.audioUri,
+          }));
+          setAllBooks(mappedBooks);
+        }
+      } catch (error) {
+        console.error("Error fetching all books:", error);
+      }
+    };
+    fetchAllBooks();
+  }, []);
 
   useEffect(() => {
     if (book) {
-      // Update page title
       document.title = `${book.title} by ${book.author} | Book Summary`;
       
       // Update meta description
@@ -77,14 +142,19 @@ function BookDetails() {
         <Header book={book} />
         <AudioPlayer 
           book={book} 
-          onTimeUpdate={(time) => setCurrentTime(time)} 
+          onTimeUpdate={(time) => setCurrentTime(time)}
+          onDurationChange={(duration) => setAudioDuration(duration)}
         />
-        <Summary book={book} currentTime={currentTime} />
-        <RecommendedBooks currentBook={book} allBooks={bookData} />
-        <Comment />
+        <Summary 
+          book={book} 
+          currentTime={currentTime}
+          audioDuration={audioDuration}
+        />
+        <RecommendedBooks currentBook={book} allBooks={allBooks} />
+        {book && <Comment bookId={String(book.id)} />}
       </div>
     </div>
-  )
+  );
 }
 
-export default BookDetails
+export default BookDetails;

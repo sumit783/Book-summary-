@@ -16,7 +16,7 @@ router.get('/comments/book/:bookId', getCommentsByBook);
 router.get('/comments/:id', getCommentById);
 
 // Protected routes - authentication required
-router.post('/comments/', auth, createComment);
+router.post('/comments', auth, createComment);
 router.put('/comments/:id', auth, updateComment);
 router.delete('/comments/:id', auth, deleteComment);
 router.get('/comments/user/me', auth, getUserComments);

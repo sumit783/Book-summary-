@@ -2,6 +2,13 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 3,
+    maxlength: 30
+  },
   email: {
     type: String,
     required: true,
@@ -49,16 +56,15 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 userSchema.methods.toJSON = function() {
   const user = this.toObject();
   delete user.password;
-  return user;
+  return {
+    ...user,
+    createdAt: this.createdAt ? this.createdAt.toLocaleDateString() : null,
+  };
 };
 
 // Virtual for formatted registration date
 userSchema.virtual('formattedDate').get(function() {
-  return this.createdAt.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  return this.createdAt ? this.createdAt.toLocaleDateString() : null;
 });
 
 // Ensure virtual fields are serialized

@@ -38,9 +38,11 @@ const bookSchema = new mongoose.Schema({
   },
   rating: {
     type: Number,
+    default:0
   },
   reviews: {
     type: Number,
+    default:0
   },
   audioUri: {
     type: String,
