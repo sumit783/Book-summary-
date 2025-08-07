@@ -195,14 +195,95 @@ exports.reactivateAccount = async (req, res) => {
   }
 };
 
+exports.getMyFavBooks = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const favBooks = await FavBooks.find({userId: userId}).populate('bookId','title author coverImage description');
+    res.json({ favBooks, success: true });
+  } catch (err) {
+    console.error('Get fav books error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 // Get all users (admin only)
 exports.getAllUsers = async (req, res) => {
   try {
+    console.log('Getting all users...');
     const users = await User.find().select('-password');
-    res.json({ users });
+    console.log(`Found ${users.length} users`);
+    
+    // Get all favorite books
+    console.log('Getting all favorite books...');
+    const allFavBooks = await FavBooks.find().populate('bookId','title author coverImage description');
+    console.log(`Found ${allFavBooks.length} favorite books`);
+    
+    // Filter out favorite books with null bookId (orphaned references)
+    const validFavBooks = allFavBooks.filter(favBook => favBook.bookId !== null);
+    console.log(`Found ${validFavBooks.length} valid favorite books (${allFavBooks.length - validFavBooks.length} orphaned references)`);
+    
+    // Organize favorite books by user
+    const usersWithFavBooks = users.map(user => {
+      const userFavBooks = validFavBooks.filter(favBook => 
+        favBook.userId.toString() === user._id.toString()
+      );
+      
+      console.log(`User ${user.username} has ${userFavBooks.length} valid favorite books`);
+      
+      return {
+        ...user.toObject(),
+        favBooks: userFavBooks
+      };
+    });
+    
+    console.log('Sending response with users and their favorite books');
+    res.json({ 
+      users: usersWithFavBooks,
+      success: true 
+    });
 
   } catch (err) {
     console.error('Get all users error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Clean up orphaned favorite book references
+exports.cleanupOrphanedFavBooks = async (req, res) => {
+  try {
+    console.log('Cleaning up orphaned favorite book references...');
+    
+    // Get all favorite books
+    const allFavBooks = await FavBooks.find().populate('bookId');
+    
+    // Find orphaned references (where bookId is null)
+    const orphanedFavBooks = allFavBooks.filter(favBook => favBook.bookId === null);
+    
+    if (orphanedFavBooks.length > 0) {
+      console.log(`Found ${orphanedFavBooks.length} orphaned favorite book references`);
+      
+      // Delete orphaned references
+      const orphanedIds = orphanedFavBooks.map(favBook => favBook._id);
+      await FavBooks.deleteMany({ _id: { $in: orphanedIds } });
+      
+      console.log(`Deleted ${orphanedFavBooks.length} orphaned favorite book references`);
+      
+      res.json({
+        message: `Cleaned up ${orphanedFavBooks.length} orphaned favorite book references`,
+        deletedCount: orphanedFavBooks.length,
+        success: true
+      });
+    } else {
+      console.log('No orphaned favorite book references found');
+      res.json({
+        message: 'No orphaned favorite book references found',
+        deletedCount: 0,
+        success: true
+      });
+    }
+    
+  } catch (err) {
+    console.error('Cleanup orphaned fav books error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };

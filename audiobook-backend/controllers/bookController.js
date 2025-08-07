@@ -21,6 +21,11 @@ exports.createBook = async (req, res) => {
         rating,
         reviews,
       } = req.body;
+
+      // Ensure categories is an array
+      if (!Array.isArray(categories)) {
+        return res.status(400).json({ error: 'Categories must be an array.' });
+      }
   
       // Check for existing book with the same title (case-insensitive)
       const existingBookByTitle = await Book.findOne({ title: { $regex: `^${title}$`, $options: 'i' } });
@@ -101,6 +106,12 @@ exports.getBookById = async (req, res) => {
 
 exports.updateBook = async (req, res) => {
   try {
+    // Fallback for FormData: if req.body is empty, try req.fields (if using multer or similar)
+    const body = req.body && Object.keys(req.body).length > 0 ? req.body : (req.fields || {});
+    if (!body || Object.keys(body).length === 0) {
+      return res.status(400).json({ error: 'No data provided in request body.' });
+    }
+
     const {
       title,
       author,
@@ -110,12 +121,34 @@ exports.updateBook = async (req, res) => {
       metaDescription,
       metaKeywords,
       genre,
-      categories,
       affiliateLink,
       publicationDate,
       rating,
       reviews,
-    } = req.body;
+    } = body;
+
+    // Handle categories from FormData (categories[0], categories[1], etc.)
+    let categories = [];
+    if (body.categories) {
+      if (Array.isArray(body.categories)) {
+        categories = body.categories;
+      } else {
+        // Handle FormData array format
+        const categoryKeys = Object.keys(body).filter(key => key.startsWith('categories['));
+        categories = categoryKeys
+          .sort((a, b) => {
+            const aIndex = parseInt(a.match(/\[(\d+)\]/)[1]);
+            const bIndex = parseInt(b.match(/\[(\d+)\]/)[1]);
+            return aIndex - bIndex;
+          })
+          .map(key => body[key]);
+      }
+    }
+
+    // Ensure categories is an array
+    if (!Array.isArray(categories)) {
+      return res.status(400).json({ error: 'Categories must be an array.' });
+    }
 
     // Find the existing book to check if summary has changed
     const existingBook = await Book.findById(req.params.id);
@@ -136,7 +169,13 @@ exports.updateBook = async (req, res) => {
       }
     }
 
-    const book = await Book.findByIdAndUpdate(req.params.id, {
+    // Handle cover image update
+    let coverImage = existingBook.coverImage;
+    if (req.file) {
+      coverImage = `/uploads/${req.file.filename}`;
+    }
+
+    const updateData = {
       title,
       author,
       description,
@@ -151,8 +190,18 @@ exports.updateBook = async (req, res) => {
       rating,
       reviews,
       audioUri,
+      coverImage,
       updatedAt: Date.now(),
-    }, { new: true });
+    };
+
+    // Remove undefined values
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
+
+    const book = await Book.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
@@ -203,4 +252,19 @@ exports.deleteBook = async (req, res) => {
   }
 };
 
+exports.addFavBook = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { bookId } = req.body;
+    const favBook = new FavBooks({ userId, bookId });
+    await favBook.save();
+    res.json({
+      message: 'Fav book added successfully',
+      success: true
+    });
+  } catch (err) {
+    console.error('Add fav book error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
 

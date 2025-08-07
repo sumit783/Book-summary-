@@ -2,6 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import type { AdminBook } from './BookTable';
 import { Button } from '../ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface BookDetailsDialogProps {
   open: boolean;
@@ -9,9 +10,10 @@ interface BookDetailsDialogProps {
   book: AdminBook | null;
   onEdit?: (book: AdminBook) => void;
   onDelete?: (book: AdminBook) => void;
+  deleteLoading?: boolean;
 }
 
-const BookDetailsDialog: React.FC<BookDetailsDialogProps> = ({ open, onClose, book, onEdit, onDelete }) => {
+const BookDetailsDialog: React.FC<BookDetailsDialogProps> = ({ open, onClose, book, onEdit, onDelete, deleteLoading }) => {
   if (!open || !book) return null;
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -19,7 +21,7 @@ const BookDetailsDialog: React.FC<BookDetailsDialogProps> = ({ open, onClose, bo
         className="overflow-y-auto max-h-[90vh] p-0 bg-gradient-to-br from-white via-indigo-50 to-purple-50 dark:from-neutral-900 dark:via-indigo-950 dark:to-purple-950 scrollbar-none custom-scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        <div className="rounded-2xl shadow-xl p-6 max-w-2xl mx-auto relative">
+        <div className="rounded-2xl shadow-xl p-6 w-full mx-auto relative">
           {/* Edit and Delete Buttons */}
          
           <DialogHeader>
@@ -91,10 +93,12 @@ const BookDetailsDialog: React.FC<BookDetailsDialogProps> = ({ open, onClose, bo
             )}
             {onDelete && (
               <Button
-                className="px-3 py-1 rounded-lg bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition"
+                className="px-3 py-1 rounded-lg bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition flex items-center gap-2"
                 onClick={() => onDelete(book)}
                 title="Delete Book"
+                disabled={deleteLoading}
               >
+                {deleteLoading ? <Loader2 className="animate-spin w-4 h-4" /> : null}
                 Delete
               </Button>
             )}

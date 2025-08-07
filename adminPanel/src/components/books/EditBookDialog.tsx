@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { UploadCloud, X } from 'lucide-react';
 import type { AdminBook } from './BookTable';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface EditBookDialogProps {
   open: boolean;
@@ -24,14 +26,16 @@ interface EditBookDialogProps {
     coverImageUrl?: string;
   };
   onFormChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onFormSubmit: (e: React.FormEvent) => void;
   onImageChange?: (file: File | null, url: string | null) => void;
   onCategoriesChange?: (categories: string[]) => void;
+  onBookEdited?: () => void; // callback to refresh book list
 }
 
-const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onClose, book, form, onFormChange, onFormSubmit, onImageChange, onCategoriesChange }) => {
+const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onClose, book, form, onFormChange, onImageChange, onCategoriesChange, onBookEdited }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newCategory, setNewCategory] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Optionally, reset file input if book changes
@@ -77,6 +81,93 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onClose, book, fo
     }
   };
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Form submission started');
+    
+    if (!book) {
+      console.error('No book selected');
+      toast.error('No book selected for editing');
+      return;
+    }
+    
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      console.error('No auth token found');
+      toast.error('Not authenticated');
+      return;
+    }
+    
+    // Ensure categories is an array
+    if (!Array.isArray(form.categories)) {
+      console.error('Categories is not an array:', form.categories);
+      toast.error('Categories must be an array');
+      return;
+    }
+    
+    console.log('Form data:', form);
+    console.log('Book ID:', book.id);
+    
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', form.title || '');
+      formData.append('author', form.author || '');
+      formData.append('description', form.description || '');
+      formData.append('summary', form.summary || '');
+      formData.append('metaTitle', form.metaTitle || '');
+      formData.append('metaDescription', form.metaDescription || '');
+      formData.append('metaKeywords', form.metaKeywords || '');
+      formData.append('genre', form.genre || '');
+      formData.append('affiliateLink', form.affiliateLink || '');
+      
+      // Add categories as individual array items
+      form.categories.forEach((category, index) => {
+        formData.append(`categories[${index}]`, category);
+      });
+      
+      if (form.coverImage) {
+        formData.append('coverImage', form.coverImage);
+      }
+
+      console.log('Update Book Payload:', Object.fromEntries(formData.entries()));
+      console.log('Request URL:', `${import.meta.env.VITE_BASE_URI}/api/books/${book.id}`);
+      
+      const response = await fetch(`${import.meta.env.VITE_BASE_URI}/api/books/${book.id}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: formData,
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      if (response.status === 401) {
+        console.error('Unauthorized - redirecting to login');
+        navigate('/login');
+        return;
+      }
+
+      const data = await response.json();
+      console.log('Update response:', data);
+      
+      if (response.ok && data.success) {
+        toast.success(data.message || 'Book updated successfully!');
+        if (onBookEdited) onBookEdited();
+        onClose();
+      } else {
+        throw new Error(data.message || data.error || 'Failed to update book');
+      }
+    } catch (err: any) {
+      console.error('Update book error:', err);
+      toast.error(err.message || 'Failed to update book');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
@@ -87,7 +178,7 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onClose, book, fo
           <DialogHeader>
             <DialogTitle className="text-2xl font-extrabold text-primary drop-shadow mb-4 tracking-tight text-center">Edit Book</DialogTitle>
           </DialogHeader>
-          <form onSubmit={onFormSubmit} className="space-y-6">
+          <form onSubmit={handleFormSubmit} className="space-y-6">
             {/* Cover Image Upload */}
             <div className="flex flex-col items-center gap-3">
               <label
@@ -147,7 +238,7 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onClose, book, fo
                     placeholder="Add category"
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    onKeyPress={handleKeyPress}
+                    onKeyDown={handleKeyPress}
                     className="rounded-xl shadow-sm focus:ring-2 focus:ring-primary/30"
                   />
                   <Button type="button" onClick={handleAddCategory} className="rounded-xl">Add</Button>
@@ -175,8 +266,12 @@ const EditBookDialog: React.FC<EditBookDialogProps> = ({ open, onClose, book, fo
               <Input id="affiliateLink" name="affiliateLink" placeholder="Affiliate Link" value={form.affiliateLink} onChange={onFormChange} className="rounded-xl shadow-sm focus:ring-2 focus:ring-primary/30" />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="ghost" onClick={onClose} className="rounded-xl">Cancel</Button>
-              <Button type="submit" variant="secondary" className="rounded-xl font-bold shadow-md hover:shadow-xl">Save</Button>
+              <Button type="button" variant="ghost" onClick={onClose} className="rounded-xl" disabled={loading}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="secondary" className="rounded-xl font-bold shadow-md hover:shadow-xl" disabled={loading}>
+                {loading ? 'Updating...' : 'Save Changes'}
+              </Button>
             </div>
           </form>
         </div>

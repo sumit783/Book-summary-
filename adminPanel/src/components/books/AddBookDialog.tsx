@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { UploadCloud, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface AddBookDialogProps {
   open: boolean;
@@ -22,15 +24,17 @@ interface AddBookDialogProps {
     coverImageUrl?: string;
   };
   onFormChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onFormSubmit: (e: React.FormEvent) => void;
+  // Remove onFormSubmit from parent, handle here
   onImageChange?: (file: File | null, url: string | null) => void;
   onCategoriesChange?: (categories: string[]) => void;
+  onBookAdded?: () => void; // callback to refresh book list
 }
 
-const AddBookDialog: React.FC<AddBookDialogProps> = ({ open, onClose, form, onFormChange, onFormSubmit, onImageChange, onCategoriesChange }) => {
+const AddBookDialog: React.FC<AddBookDialogProps> = ({ open, onClose, form, onFormChange, onImageChange, onCategoriesChange, onBookAdded }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newCategory, setNewCategory] = useState('');
-
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (file && onImageChange) {
@@ -70,6 +74,83 @@ const AddBookDialog: React.FC<AddBookDialogProps> = ({ open, onClose, form, onFo
     }
   };
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      toast.error('Not authenticated');
+      return;
+    }
+    // Ensure categories is an array
+    if (!Array.isArray(form.categories)) {
+      toast.error('Categories must be an array');
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      // Always use FormData for this endpoint since it expects file upload
+      const formData = new FormData();
+      formData.append('title', form.title);
+      formData.append('author', form.author);
+      formData.append('description', form.description);
+      formData.append('summary', form.summary);
+      formData.append('metaTitle', form.metaTitle);
+      formData.append('metaDescription', form.metaDescription);
+      formData.append('metaKeywords', form.metaKeywords);
+      formData.append('genre', form.genre);
+      formData.append('affiliateLink', form.affiliateLink);
+      
+      // Add cover image if present
+      if (form.coverImage) {
+        formData.append('coverImage', form.coverImage);
+      } else {
+        toast.error('Cover image is required');
+        setLoading(false);
+        return;
+      }
+
+      // Add categories as individual array items
+      form.categories.forEach((category, index) => {
+        formData.append(`categories[${index}]`, category);
+      });
+
+      const response = await fetch(`${import.meta.env.VITE_BASE_URI}/api/books/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          // Don't set Content-Type for FormData, let browser set it with boundary
+        },
+        body: formData,
+      });
+      console.log("create Book Payload :",formData);
+      if(response.status === 401){
+        navigate('/login');
+        return;
+      }
+      const data = await response.json();
+      if (response.ok && data.success) {
+        toast.success('Book added successfully!');
+        console.log('Book added successfully, calling onBookAdded callback');
+        if (onBookAdded) {
+          console.log('Calling onBookAdded callback...');
+          onBookAdded();
+          console.log('onBookAdded callback completed');
+        } else {
+          console.warn('onBookAdded callback is not provided');
+        }
+        // Remove onClose() call - let parent handle dialog closure
+      } else {
+        throw new Error(data.message || data.error || 'Failed to add book');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to add book');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  console.log('AddBookDialog render - open prop:', open);
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
@@ -80,7 +161,7 @@ const AddBookDialog: React.FC<AddBookDialogProps> = ({ open, onClose, form, onFo
           <DialogHeader>
             <DialogTitle className="text-2xl font-extrabold text-primary drop-shadow mb-4 tracking-tight text-center">Add New Book</DialogTitle>
           </DialogHeader>
-          <form onSubmit={onFormSubmit} className="space-y-6">
+          <form onSubmit={handleFormSubmit} className="space-y-6">
             {/* Cover Image Upload */}
             <div className="flex flex-col items-center gap-3">
               <label
@@ -123,7 +204,6 @@ const AddBookDialog: React.FC<AddBookDialogProps> = ({ open, onClose, form, onFo
               <textarea name="metaDescription" placeholder="Meta Description" value={form.metaDescription} onChange={onFormChange} className="w-full p-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-primary/30 min-h-[60px] resize-none" rows={2} />
               <Input name="metaKeywords" placeholder="Meta Keywords" value={form.metaKeywords} onChange={onFormChange} className="rounded-xl shadow-sm focus:ring-2 focus:ring-primary/30" />
               <Input name="genre" placeholder="Genre" value={form.genre} onChange={onFormChange} className="rounded-xl shadow-sm focus:ring-2 focus:ring-primary/30" />
-              
               {/* Categories */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Categories</label>
@@ -155,12 +235,13 @@ const AddBookDialog: React.FC<AddBookDialogProps> = ({ open, onClose, form, onFo
                   </div>
                 )}
               </div>
-              
               <Input name="affiliateLink" placeholder="Affiliate Link" value={form.affiliateLink} onChange={onFormChange} className="rounded-xl shadow-sm focus:ring-2 focus:ring-primary/30" />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="ghost" onClick={onClose} className="rounded-xl">Cancel</Button>
-              <Button type="submit" variant="secondary" className="rounded-xl font-bold shadow-md hover:shadow-xl">Add Book</Button>
+              <Button type="submit" variant="secondary" className="rounded-xl font-bold shadow-md hover:shadow-xl" disabled={loading}>
+                {loading ? 'Adding...' : 'Add Book'}
+              </Button>
             </div>
           </form>
         </div>

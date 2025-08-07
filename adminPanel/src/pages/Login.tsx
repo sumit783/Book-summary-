@@ -1,16 +1,47 @@
 import React, { useState } from 'react';
 import { IconEye, IconEyeOff, IconLock, IconMail, IconBrandTabler } from '@tabler/icons-react';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Login attempt:', { email, password });
+    setError(null);
+    setLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BASE_URI}/api/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+
+      const data = await response.json();
+      if (data.access_token) {
+        localStorage.setItem('authToken', data.access_token);
+        navigate('/');
+        // Optionally redirect or show success
+      } else {
+        throw new Error('No token received');
+      }
+    } catch (error: any) {
+      setError(error.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -199,6 +230,11 @@ const Login: React.FC = () => {
               </div>
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <div className="text-red-400 text-sm text-center">{error}</div>
+            )}
+
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <label className="flex items-center">
@@ -222,13 +258,14 @@ const Login: React.FC = () => {
               whileTap={{ scale: 0.98 }}
               type="submit"
               className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-lg hover:shadow-xl"
+              disabled={loading}
             >
-              Sign In
+              {loading ? 'Signing In...' : 'Sign In'}
             </motion.button>
           </form>
 
           {/* Divider */}
-          <div className="mt-6">
+          {/* <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/20"></div>
@@ -237,10 +274,10 @@ const Login: React.FC = () => {
                 <span className="px-2 bg-black/40 text-gray-400">Or continue with</span>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Social Login Buttons */}
-          <div className="mt-6 grid grid-cols-2 gap-3">
+          {/* <div className="mt-6 grid grid-cols-2 gap-3">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -266,11 +303,10 @@ const Login: React.FC = () => {
               </svg>
               <span className="ml-2">Twitter</span>
             </motion.button>
-          </div>
+          </div> */}
         </motion.div>
-
         {/* Footer */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.6 }}
@@ -282,7 +318,7 @@ const Login: React.FC = () => {
               Sign up
             </button>
           </p>
-        </motion.div>
+        </motion.div> */}
       </motion.div>
     </div>
   );
