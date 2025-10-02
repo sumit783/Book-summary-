@@ -267,4 +267,22 @@ exports.addFavBook = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+exports.updateBookPlayCount = async (req, res) => {
+  try {
+    const { bookId } = req.body;
+    const book = await Book.findById(bookId);
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+    book.totalPlays += 1;
+    await book.save();
+    res.json({
+      message: 'Book play count updated successfully',
+      success: true
+    });
+  } catch (err) {
+    console.error('Update book play count error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
 

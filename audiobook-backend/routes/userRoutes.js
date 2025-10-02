@@ -10,7 +10,9 @@ const {
   getAllUsers,
   deleteUser,
   cleanupOrphanedFavBooks,
-  getMyFavBooks
+  getMyFavBooks,
+  removeFavBook,
+  checkFavBook
 } = require('../controllers/userController');
 
 // Import auth middleware (you'll need to create this)
@@ -24,6 +26,8 @@ router.post('/login', login);
 // Protected routes (require authentication)
 router.get('/profile', auth, getProfile);
 router.get('/myFavBooks', auth, getMyFavBooks);
+router.post('/removeFavBook', auth, removeFavBook);
+router.post('/checkFavBook', auth, checkFavBook);
 router.put('/profile', auth, updateProfile);
 
 router.patch('/deactivate', auth, deactivateAccount);

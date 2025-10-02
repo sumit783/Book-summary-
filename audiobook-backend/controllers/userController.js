@@ -197,11 +197,40 @@ exports.reactivateAccount = async (req, res) => {
 
 exports.getMyFavBooks = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const favBooks = await FavBooks.find({userId: userId}).populate('bookId','title author coverImage description');
+    console.log('Getting favorite books for user:', req.userId);
+    const userId = req.userId;
+    const favBooks = await FavBooks.find({userId: userId}).populate('bookId','title author coverImage description rating reviews');
+    console.log(`Found ${favBooks.length} favorite books for user ${userId}`);
     res.json({ favBooks, success: true });
   } catch (err) {
     console.error('Get fav books error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.removeFavBook = async (req, res) => {
+  try {
+    const { bookId } = req.body;
+    await FavBooks.findOneAndDelete({ userId: req.userId, bookId: bookId });
+    res.json({ message: 'Favorite book removed successfully', success: true });
+  } catch (err) {
+    console.error('Remove fav book error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.checkFavBook = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { bookId } = req.body;
+    const favBook = await FavBooks.findOne({ userId: userId, bookId: bookId });
+    if (favBook) {
+      res.json({ favBook, success: true, message: 'Favorite book found' });
+    } else {
+      res.json({ message: 'Favorite book not found', success: false, message: 'Favorite book not found' });
+    }
+  } catch (err) {
+    console.error('Check fav book error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };

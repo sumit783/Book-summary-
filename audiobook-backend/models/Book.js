@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const bookSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -38,15 +38,16 @@ const bookSchema = new mongoose.Schema({
   },
   rating: {
     type: Number,
-    default:0
+    default: 0,
   },
   reviews: {
     type: Number,
-    default:0
+    default: 0,
   },
   audioUri: {
     type: String,
   },
+  totalPlays: { type: Number, default: 0 },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -55,4 +56,4 @@ const bookSchema = new mongoose.Schema({
     type: Date,
   },
 });
-module.exports = mongoose.model('Book', bookSchema);
+module.exports = mongoose.model("Book", bookSchema);

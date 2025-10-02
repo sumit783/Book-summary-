@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { Slider } from "../ui/slider";
 import type { Book } from "@/type/bookType";
+import { playBook } from "@/services/api";
 
 interface AudioPlayerProps {
   book: Book | undefined;
@@ -98,6 +99,12 @@ export default function AudioPlayer({ book, onTimeUpdate, onDurationChange }: Au
     if (isPlaying) {
       audio.pause();
     } else {
+      // Fire-and-forget: update play count when user presses Play
+      if (book?.id !== undefined && book?.id !== null) {
+        playBook(String(book.id)).catch((error) => {
+          console.error('Error updating play count:', error);
+        });
+      }
       audio.play().catch(error => {
         console.error('Error playing audio:', error);
       });

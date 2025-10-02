@@ -8,11 +8,13 @@ const adminAuthRoutes = require('./routes/adminAuthRoutes');
 const { startRatingScheduler } = require('./services/ratingScheduler');
 const path = require('path');
 const cors = require('cors');
+const morgan = require('morgan');
 
 
 const app = express();
 connectDB();
 
+app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

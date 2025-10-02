@@ -39,3 +39,7 @@ export const getCommentsByBook = (bookId: string, params?: { page?: number; limi
   return API.get(`/comments/book/${bookId}`, { params });
 };
 
+export const playBook = (bookId: string) => {
+  return API.post('/books/play', { bookId });
+};
+
